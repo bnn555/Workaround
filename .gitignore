@@ -1,0 +1,9 @@
+#########
+# Folder config file
+Desktop.ini
+
+############
+# Linux CPP
+###########
+Linux-x86_64-*
+*Makefile
