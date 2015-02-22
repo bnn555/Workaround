@@ -1,0 +1,14 @@
+#include "../../env/wka.rules"
+
+INCLUDE = \
+ -I../LibHelloWorld\
+
+SRCS = \
+ m_helloWorld.cc\
+
+CompileSources($(SRCS))
+
+LIBS_UNTARGET=\
+ $(LIBRARIES_UNTARGET)\
+
+LinkProgram(m_helloWorld,,$(LIBRARIES_TARGET),$(LIBS_UNTARGET))

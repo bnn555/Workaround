@@ -12,7 +12,7 @@ export WORKAROUND_CXX_VER=gcc$(${WORKAROUND_CXX} -dumpversion)
 
 export WORKAROUND_ENV_BASE="$( cd "$( dirname "${BASH_SOURCE[0]}" )" > /dev/null  && pwd )"
 export WORKAROUND_BASE="$( cd "${WORKAROUND_ENV_BASE}/.." > /dev/null  && pwd )"
-export WORKAROUND_CPP_BASE="${ATS_BASE}/cpp"
+export WORKAROUND_CPP_BASE="${WORKAROUND_BASE}/cpp"
 
 cd ${WORKAROUND_BASE}
 

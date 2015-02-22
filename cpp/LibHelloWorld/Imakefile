@@ -1,0 +1,13 @@
+#include "../../env/wka.rules"
+
+AddSubdirs(LibImpl)
+
+INCLUDE = \
+ -ILibImpl\
+
+SRCS = \
+ HelloWorld.cc\
+
+CompileSources($(SRCS))
+
+LinkLibrary(HelloWorld,LibImpl)

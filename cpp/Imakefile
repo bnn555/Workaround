@@ -1,0 +1,9 @@
+#include "../env/wka.rules"
+
+SUBDIRS = \
+ LibHelloWorld\
+ MainHelloWorld\
+
+
+AddSubdirs($(SUBDIRS))
+

@@ -18,6 +18,9 @@ else
 	if [ "$#" -eq 0 ]; then
 		cd ${WORKAROUND_BASE}
 		pwd
+	elif [ "$1" == "wka" ]; then
+		cd $WORKAROUND_CPP_BASE/Deployment/$TARGET
+		pwd
 	else
 		MATCH=$(cd ${WORKAROUND_BASE} > /dev/null; match_dir.sh $@)
 

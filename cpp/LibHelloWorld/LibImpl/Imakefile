@@ -1,0 +1,9 @@
+#include "../../../env/wka.rules"
+
+INCLUDE = \
+ -I..\
+
+SRCS = \
+ Demo.cc\
+
+CompileSources($(SRCS))

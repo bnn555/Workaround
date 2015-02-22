@@ -1,0 +1,329 @@
+/******************************************************************************/
+/* TargetLibs								      */
+/* Adds the TARGET and CC_LIB_EXT variables to the path of the file name:     */
+/* If the library already has an extension it will preserve it.               */
+/******************************************************************************/
+
+#ifndef TargetLibs
+#define TargetLibs(I_LIBS) \
+$(patsubst %.so.so,%.so,$(patsubst %.a.a,%.a,$(patsubst %.so.a,%.so,$(patsubst %.a.so,%.a,$(foreach item,I_LIBS,$(subst $(notdir $(item)),${TARGET}/$(notdir $(item))${CC_LIB_EXT},$(item)))))))
+
+#endif /* TargetLibs */
+
+/******************************************************************************/
+/* LinkLibs								      */
+/* For shared use -Lpath -lname syntax, for static use path/libName.a syntax  */
+/******************************************************************************/
+#ifndef LinkLibs
+#define LinkLibs(I_LIBS) \
+$(foreach item,TargetLibs(I_LIBS),$(if $(findstring .so,$(item)),-L$(dir $(item)) -l$(patsubst lib%.so,%,$(notdir $(item))),$(item)))
+
+#endif /* LinkLibs */
+
+/******************************************************************************/
+
+/******************************************************************************/
+/* CompileSources						   	      */
+/******************************************************************************/
+
+#ifndef CompileSources
+#define CompileSources(I_SRCS)                                                  @@\
+                                                                                @@\
+_SRCS_O = $(patsubst %.cc,${TARGET}/%.o,$(patsubst %.cpp,${TARGET}/%.o,I_SRCS)) @@\
+                                                                                @@\
+objs_cc : | ${TARGET}                                                           @@\
+	@echo $(_SRCS_O) > $(OBJS_CC)                                           @@\
+                                                                                @@\
+compile :: objs_cc $(_SRCS_O) | ${TARGET}                                       @@\
+                                                                                @@\
+ifeq ($(MAKECMDGOALS),compile)                                                  @@\
+-include $(_SRCS_O:.o=.d)                                                       @@\
+endif                                                                           @@\
+
+#endif /* CompileSources */
+
+/******************************************************************************/
+/* LinkLibrary                                                                */
+/* Links a library static or shared depending on the CC_SHARED variable       */
+/******************************************************************************/
+#ifndef LinkLibrary
+#define LinkLibrary(I_LIB,I_FOLDERS)                                            @@\
+                                                                                @@\
+LinkLibraryExt(I_LIB,I_FOLDERS,${CC_LIB_EXT},,)                                 @@\
+
+#endif /* LinkLibrary */
+
+/******************************************************************************/
+/* LinkLibraryStatic 							      */
+/* Links a library static regarding the CC_SHARED variable                    */
+/******************************************************************************/
+#ifndef LinkLibraryStatic
+#define LinkLibraryStatic(I_LIB,I_FOLDERS)                                      @@\
+                                                                                @@\
+LinkLibraryExt(I_LIB,I_FOLDERS,.a,,)                                            @@\
+
+#endif /* LinkLibraryStatic */
+
+/******************************************************************************/
+/* LinkLibraryShared							      */
+/* Links a library shared regarding the CC_SHARED variable                    */
+/******************************************************************************/
+#ifndef LinkLibraryShared
+#define LinkLibraryShared(I_LIB,I_FOLDERS)                                      @@\
+                                                                                @@\
+LinkLibraryExt(I_LIB,I_FOLDERS,.so,,)                                           @@\
+
+#endif /* LinkLibraryShared */
+
+/******************************************************************************/
+/* LinkLibraryExt							      */
+/* Internal function, use instead higher level functions                      */
+/* I_EXT can take the following values: .a or .so                             */
+/* In the case of static libraries target and untarget libs are ignored       */
+/******************************************************************************/
+
+#ifndef LinkLibraryExt
+#define LinkLibraryExt(I_LIB,I_FOLDERS,I_EXT,I_TARGET_LIBS,I_UNTARGET_LIBS)     @@\
+                                                                                @@\
+libs :: ${TARGET}/Concat3(lib,I_LIB,I_EXT)                                      @@\
+                                                                                @@\
+Concat(I_LIB,_OBJS) = $(shell imake_get_objs.sh I_FOLDERS .)                    @@\
+ifneq (I_TARGET_LIBS,)                                                          @@\
+Concat(I_LIB,_SYM) = $(LD_CHECK_SYM)                                            @@\
+endif                                                                           @@\
+                                                                                @@\
+${TARGET}/Concat3(lib,I_LIB,.a) : $(Concat(I_LIB,_OBJS)) | ${TARGET}            @@\
+ifeq (${CC_VERBOSE},0)                                                          @@\
+	@echo -e "$(C_FG_RED)$(C_BOLD)Linking $(CURDIR:${WORKAROUND_CPP_BASE}/%=%)$@$(C_RESET)" @@\
+endif                                                                           @@\
+	@rm -f $@                                                                    @@\
+	@ar -r $@ $^                                                                 @@\
+                                                                                @@\
+${TARGET}/Concat3(lib,I_LIB,.so) : $(Concat(I_LIB,_OBJS)) TargetLibs(I_TARGET_LIBS) | ${TARGET} @@\
+ifeq (${CC_VERBOSE},0)                                                          @@\
+	@echo -e "$(C_FG_RED)$(C_BOLD)Linking $(CURDIR:${WORKAROUND_CPP_BASE}/%=%)/$@$(C_RESET)" @@\
+endif                                                                           @@\
+	@rm -f $@                                                                    @@\
+	$(CXX) -shared $(CXXFLAGS_COMPLETE) $(LDFLAGS_COMPLETE) $(Concat(I_LIB,_SYM)) $(Concat(I_LIB,_OBJS)) LinkLibs(I_TARGET_LIBS) I_UNTARGET_LIBS -o $@ @@\
+
+#endif /* LinkLibraryExt */
+
+/******************************************************************************/
+/* LinkProgram 								      */
+/******************************************************************************/
+
+#ifndef LinkProgram
+#define LinkProgram(I_PROGRAM,I_FOLDERS,I_TARGET_LIBS,I_UNTARGET_LIBS)          @@\
+                                                                                @@\
+mains :: ${TARGET}/I_PROGRAM                                                    @@\
+                                                                                @@\
+Concat(I_PROGRAM,_OBJS) = $(shell imake_get_objs.sh I_FOLDERS .)                @@\
+                                                                                @@\
+${TARGET}/I_PROGRAM : $(Concat(I_PROGRAM,_OBJS)) TargetLibs(I_TARGET_LIBS) | ${TARGET} @@\
+ifeq (${CC_VERBOSE},0)                                                          @@\
+	@echo -e "$(C_FG_RED)$(C_BOLD)Linking $(CURDIR:${WORKAROUND_CPP_BASE}/%=%)/$@$(C_RESET)" @@\
+endif                                                                           @@\
+	$(CXX) $(CXXFLAGS_COMPLETE) $(LDFLAGS_COMPLETE) $(LD_CHECK_SYM) $(Concat(I_PROGRAM,_OBJS)) LinkLibs(I_TARGET_LIBS) I_UNTARGET_LIBS -o $@ @@\
+
+#endif /* LinkProgram */
+
+
+/******************************************************************************/
+/*AddSubdirs*/
+/******************************************************************************/
+
+#ifndef AddSubdirs
+#define AddSubdirs(I_DIRS)                                                      @@\
+                                                                                @@\
+.PHONY : I_DIRS                                                                 @@\
+                                                                                @@\
+subdirs : I_DIRS                                                                @@\
+                                                                                @@\
+I_DIRS ::                                                                       @@\
+ifeq ($(MAKECMDGOALS),domakefile)                                               @@\
+	@cd $@ && $(IMAKE)                                                      @@\
+	@$(MAKE) -C $@ domakefile                                               @@\
+else                                                                            @@\
+	@if [ ! -e $@/Makefile ]; then cd $@; $(IMAKE); fi                      @@\
+	@$(MAKE) -C $@ $(MAKECMDGOALS)                                          @@\
+endif                                                                           @@\
+
+#endif /* AddSubdirs */
+
+/******************************************************************************/
+/* Variables definition */ 
+/******************************************************************************/
+
+CC_VERBOSE ?= 0
+CC_COLORS ?= 1
+CC_SHARED ?= 0
+
+ifeq (${CC_SHARED},0)
+CC_LIB_EXT=.a
+else
+CC_LIB_EXT=.so
+endif
+
+ifeq (${CC_COLORS},1)
+export C_BOLD="\\033[1m"
+export C_RESET="\\033[0m"
+export C_FG_BLACK="\\E[0\;30m"
+export C_FG_RED="\\E[0\;31m"
+export C_FG_GREEN="\\E[0\;32m"
+export C_FG_YELLOW="\\E[0\;33m"
+export C_FG_BLUE="\\E[0\;34m"
+export C_FG_PURPLE="\\E[0\;35m"
+export C_FG_CYAN="\\E[0\;36m"
+export C_FG_WHITE="\\E[0\;37m"
+export C_BG_BLACK="\\E[40m"
+export C_BG_RED="\\E[41m"
+export C_BG_GREEN="\\E[42m"
+export C_BG_YELLOW="\\E[43m"
+export C_BG_BLUE="\\E[44m"
+export C_BG_PURPLE="\\E[45m"
+export C_BG_CYAN="\\E[46m"
+export C_BG_WHITE="\\E[47m"
+endif
+
+CXX = ${WORKAROUND_CXX}
+IMAKE = /usr/bin/imake
+MAKE = /usr/bin/make
+
+CXXFLAGS_DEFAULT = $(shell cat ${WORKAROUND_BASE}/config/CXXFLAGS.CFG | tr "\n" " ")
+
+ifeq (${WORKAROUND_OPTIMIZE},RELEASE)
+   CXXFLAGS_TARGET = -O2 -fno-strict-aliasing -DNDEBUG
+else ifeq (${WORKAROUND_OPTIMIZE},DEBUG_OPTIMIZE)
+   CXXFLAGS_TARGET = -O2 -fno-strict-aliasing
+else ifeq (${WORKAROUND_OPTIMIZE},DEBUG)
+   CXXFLAGS_TARGET = -ggdb -g3 -fstack-protector-all
+endif
+
+
+CXXFLAGS_COMPLETE =\
+ $(CXXFLAGS_DEFAULT)\
+ $(CXXFLAGS)\
+ $(CXXFLAGS_TARGET)\
+
+CXXDEFINES_DEFAULT =\
+ -D_GNU_SOURCE\
+
+CXXDEFINES_COMPLETE =\
+ $(CXXDEFINES_DEFAULT)\
+ $(CXXDEFINES)\
+
+CXXINCLUDES_DEFAULT =\
+ -I.\
+ 
+CXXINCLUDES_COMPLETE =\
+ $(CXXINCLUDES_DEFAULT)\
+ $(INCLUDE)\
+
+LIBRARIES_TARGET = $(shell imake_get_wka_libs.sh ${WORKAROUND_CPP_BASE})
+LIBRARIES_UNTARGET = 
+
+LD_CHECK_SYM = -Wl,--unresolved-symbols=ignore-in-shared-libs
+
+LDFLAGS_DEFAULT =\
+ -rdynamic\
+
+LDFLAGS_COMPLETE =\
+ $(LDFLAGS_DEFAULT)\
+ $(LDFLAGS)\
+
+OBJS_CC = ${TARGET}/.objs_cc
+
+/* CSC Folders Include */
+CSC_ROOT = $(shell echo $(CURDIR) | sed 's/\(.*\)\/Src\(.*\)/\1/g')
+SUBFOLDERS_CSC = $(shell find $(CSC_ROOT) -type d -name "Lib*")
+FOLDERS_CSC = $(CSC_ROOT)/Src $(CSC_ROOT)/EvtCsm $(CSC_ROOT)/SrvUsd $(CSC_ROOT)/SreUsd $(SUBFOLDERS_CSC)
+INCLUDES_CSC =  $(addprefix -I,$(FOLDERS_CSC))
+
+/******************************************************************************/
+
+.PHONY: all clean compile libs mains gencode gencode_links domakefile subdirs objs_cc
+.DEFAULT_GOAL = all
+
+ifeq (${CC_VERBOSE},0)
+.SILENT :
+endif
+
+MAKECMDGOALS ?= all
+
+/******************************************************************************/
+
+${TARGET} :
+	@echo -e "$(C_FG_RED)$(C_BOLD)Creating target $(CURDIR:${WORKAROUND_CPP_BASE}/%=%/${TARGET})$(C_RESET)"
+	@mkdir -p ${TARGET}
+
+/******************************************************************************/
+
+.PRECIOUS : Makefile
+Makefile : Imakefile ${WORKAROUND_ENV_BASE}/wka.rules
+	@echo -e "$(C_FG_YELLOW)$(C_BG_BLACK)$(C_BOLD)WARNING, obsolete Makefile, calling imake$(C_RESET)"; \
+	imake; \
+	$(MAKE) $(MAKECMDGOALS)
+
+/******************************************************************************/
+
+${TARGET}/%.o : %.cc | ${TARGET}
+ifeq (${CC_VERBOSE},0)
+	@echo -e "$(C_FG_RED)Compiling $<$(C_RESET)"
+endif
+	$(CXX) -c $(CXXFLAGS_COMPLETE) $(CXXDEFINES_COMPLETE) $(CXXINCLUDES_COMPLETE) -MMD -MP -MT "$@ $(@:.o=.d)" -MF $(@:.o=.d) $< -o $@
+
+${TARGET}/%.o : %.cpp | ${TARGET}
+ifeq (${CC_VERBOSE},0)
+	@echo -e "$(C_FG_RED)Compiling $<$(C_RESET)"
+endif
+	$(CXX) -c $(CXXFLAGS_COMPLETE) $(CXXDEFINES_COMPLETE) $(CXXINCLUDES_COMPLETE) -MMD -MP -MT "$@ $(@:.o=.d)" -MF $(@:.o=.d) $< -o $@
+
+/******************************************************************************/
+
+$(MAKECMDGOALS) ::
+	@echo -e "$(C_FG_BLUE)$(C_BOLD)${WORKAROUND_OPTIMIZE}: make $(MAKECMDGOALS) in $(CURDIR:${WORKAROUND_CPP_BASE}/%=%)$(C_RESET)"
+
+/******************************************************************************/
+
+all :: 
+	@$(MAKE) gencode
+	@$(MAKE) compile
+	@$(MAKE) libs
+	@$(MAKE) mains
+
+domakefile :: subdirs
+
+gencode :: subdirs
+
+compile :: subdirs
+
+libs :: subdirs
+
+mains :: subdirs
+
+/******************************************************************************/
+
+clean :: subdirs
+	@echo -e "$(C_FG_PURPLE)$(C_BOLD)Cleaning $(CURDIR:${WORKAROUND_CPP_BASE}/%=%)$(C_RESET)"
+	@rm -rf ${TARGET}
+
+/******************************************************************************/
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
