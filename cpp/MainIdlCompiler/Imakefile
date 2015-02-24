@@ -1,0 +1,13 @@
+#include "../../env/wka.rules"
+
+INCLUDE = \
+
+SRCS = \
+ m_idlCompiler.cc\
+
+CompileSources($(SRCS))
+
+LIBS_UNTARGET=\
+ $(LIBRARIES_UNTARGET)\
+
+LinkProgram(IdlCompiler.elf,,$(LIBRARIES_TARGET),$(LIBS_UNTARGET))

@@ -1,1 +1,2 @@
 MainHelloWorld/$TARGET/m_helloWorld:.
+MainIdlCompiler/$TARGET/IdlCompiler.elf:.

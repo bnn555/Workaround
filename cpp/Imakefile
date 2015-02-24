@@ -3,6 +3,7 @@
 SUBDIRS = \
  LibHelloWorld\
  MainHelloWorld\
+ MainIdlCompiler\
 
 
 AddSubdirs($(SUBDIRS))

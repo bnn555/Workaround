@@ -1,0 +1,14 @@
+#include "../../env/wka.rules"
+
+AddSubdirs(LibImpl)
+
+INCLUDE = \
+ -ILibImpl\
+
+SRCS = \
+ IdlCompiler.cc\
+ IdlCompilerParams.cc\
+
+CompileSources($(SRCS))
+
+LinkLibrary(IdlCompiler,LibImpl)
