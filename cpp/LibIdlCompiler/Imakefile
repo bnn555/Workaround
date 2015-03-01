@@ -4,6 +4,7 @@ AddSubdirs(LibImpl)
 
 INCLUDE = \
  -ILibImpl\
+ -I../LibCommon\
 
 SRCS = \
  IdlCompiler.cc\

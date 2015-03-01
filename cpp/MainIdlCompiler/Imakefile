@@ -1,6 +1,8 @@
 #include "../../env/wka.rules"
 
 INCLUDE = \
+ -I../LibIdlCompiler\
+ -I../LibCommon\
 
 SRCS = \
  m_idlCompiler.cc\

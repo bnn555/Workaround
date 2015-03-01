@@ -1,0 +1,9 @@
+#include "../../env/wka.rules"
+
+INCLUDE = \
+
+SRCS = \
+
+CompileSources($(SRCS))
+
+LinkLibrary(LibCommon,$(SUBDIRS))

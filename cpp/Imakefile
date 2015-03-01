@@ -2,9 +2,10 @@
 
 SUBDIRS = \
  LibHelloWorld\
+ LibIdlCompiler\
+ LibCommon\
  MainHelloWorld\
  MainIdlCompiler\
-
-
+ 
 AddSubdirs($(SUBDIRS))
 
